@@ -16,8 +16,8 @@
 #ifdef _WIN32
 #define NOMINMAX
 #include <lmcons.h>
-#include <shellapi.h>
 #include <windows.h>
+#include <shellapi.h>
 #pragma comment(lib, "Shell32.lib")
 #undef NOMINMAX
 #else
