@@ -1,0 +1,18 @@
+[submodule "externals/imgui_markdown"]
+    path = externals/imgui_markdown
+    url = https://github.com/juliettef/imgui_markdown.git
+[submodule "externals/python-memory-importer"]
+    path = externals/python-memory-importer
+    url = https://github.com/shabbywu/python-memory-importer.git
+[submodule "externals/zip"]
+    path = externals/zip
+    url = https://github.com/kuba--/zip.git
+[submodule "externals/NutCracker"]
+    path = externals/NutCracker
+    url = https://github.com/shabbywu/NutCracker.git
+[submodule "externals/py-scripts"]
+    path = externals/py-scripts
+    url = https://github.com/BattleBrothersGameCN/py-scripts.git
+[submodule "externals/FunctionalPlus"]
+    path = externals/FunctionalPlus
+    url = https://github.com/Dobiasd/FunctionalPlus.git

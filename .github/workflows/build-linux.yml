@@ -1,0 +1,31 @@
+name: Build-Linux
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+
+    runs-on: "ubuntu-latest"
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+
+    - name: Build and install
+      run: |
+        make
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: "ubuntu-latest"
+        path: build/output/*
+        retention-days: 3
