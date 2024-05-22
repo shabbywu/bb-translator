@@ -1,5 +1,6 @@
 #pragma once
 #include <format>
+#include <git2.h>
 
 #ifndef PRIuZ
 /* Define the printf format specifier to use for size_t output */

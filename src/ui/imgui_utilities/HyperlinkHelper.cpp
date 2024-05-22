@@ -3,8 +3,8 @@
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
 #elif defined(_WIN32)
-#include <Shellapi.h>
 #include <windows.h>
+#include <Shellapi.h>
 #elif defined(__APPLE__)
 #include <TargetConditionals.h>
 #include <cstdlib>
