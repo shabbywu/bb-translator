@@ -11,7 +11,7 @@ bb-translator 是 Battle Brothers(战场兄弟) 的文本翻译器, 翻译器使
 ## 使用说明
 1. 从 [Release](https://github.com/BattleBrothersGameCN/Release/releases) 下载最新版本的 bb-translator
 2. 解压到游戏目录
-3. 联网环境下执行
+3. 初次使用需要在联网环境下执行
 
 > Q: 为什么要联网?
 >
