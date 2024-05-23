@@ -10,6 +10,8 @@ concurrency:
 jobs:
   build:
     runs-on: macos-latest
+    env:
+      BB_TRANSLATOR_VERSION: ${{ (github.event_name == 'release' && github.event.action == 'published') && github.ref_name || github.sha }}
     steps:
     - uses: actions/checkout@v4
       with:
