@@ -81,7 +81,8 @@ static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID
                          MsgStatusBar,
                          "战场兄弟文本翻译器 - "
                          "[shabbywu](https://github.com/shabbywu/) - "
-                         "[参与汉化](https://paratranz.cn/projects/7032)",
+                         "[参与汉化](https://paratranz.cn/projects/7032)"
+                         " - 版本: " BB_TRANSLATOR_VERSION,
                      },
                      //
                      {MsgOpenTerminal, "打开终端"},
@@ -105,7 +106,8 @@ static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID
                      {MsgMenuSettingAdvance, "Advance"},
                      {MsgStatusBar, "Battle Brothers Translator - "
                                     "[shabbywu](https://github.com/shabbywu/) - "
-                                    "[Join](https://paratranz.cn/projects/7032)"},
+                                    "[Join](https://paratranz.cn/projects/7032)"
+                                    " - VERSION: " BB_TRANSLATOR_VERSION},
                      {MsgOpenTerminal, "Open terminal"},
                  }}};
 
@@ -378,11 +380,12 @@ int gui_main()
     runnerParams.callbacks.PostInit = []() {
         if (HelloImGui::HasIniSettings(runnerParams))
         {
-            if (HelloImGui::LoadUserPref("bb-translator.lang") == "cn")
-                state.lang = LangCN;
-            else
+            if (trim_copy(HelloImGui::LoadUserPref("bb-translator.lang")) != "cn")
                 state.lang = LangEN;
-            if (auto i18nProjectGitUrl = HelloImGui::LoadUserPref("bb-translator.git-url"); i18nProjectGitUrl != "")
+            else
+                state.lang = LangCN;
+            if (auto i18nProjectGitUrl = trim_copy(HelloImGui::LoadUserPref("bb-translator.git-url"));
+                i18nProjectGitUrl != "")
             {
                 state.i18nProjectGitUrl = i18nProjectGitUrl;
             }
@@ -390,7 +393,6 @@ int gui_main()
             {
                 memcpy(state.httpProxyUrl, httpProxyUrl.c_str(), httpProxyUrl.size());
             }
-            state.addLog(std::format("HTTP PROXY: {}", state.httpProxyUrl));
         }
         start_python_daemon(&state);
     };

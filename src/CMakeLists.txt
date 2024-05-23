@@ -56,3 +56,7 @@ if(WIN32)
                       "/ENTRY:mainCRTStartup")
   _hello_imgui_add_windows_icon(bb_translator ${assets_dir}/favicon.ico)
 endif()
+if(DEFINED ENVBB_TRANSLATOR_VERSION)
+  target_add_definitions(
+    bb_translator -DENVBB_TRANSLATOR_VERSION="${ENVBB_TRANSLATOR_VERSION}")
+endif()

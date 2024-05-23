@@ -12,6 +12,7 @@ jobs:
     runs-on: windows-latest
     env:
       VCPKG_DEFAULT_TRIPLET: "x86-windows"
+      BB_TRANSLATOR_VERSION: "${{ github.ref }}"
     steps:
     - uses: actions/checkout@v4
       with:
