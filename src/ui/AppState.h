@@ -18,7 +18,11 @@ class AppState
     std::filesystem::path gameDir;
     std::filesystem::path i18nProjectDir;
     std::filesystem::path i18nJSONDir;
-    std::string i18nProjectGitUrl = "https://ghproxy.shabbywu.cn/github.com/shabbywu/Battle-Brothers-CN.git";
+
+    // Git Clone
+    std::string i18nProjectGitUrl = "https://github.com/shabbywu/Battle-Brothers-CN.git";
+    char httpProxyUrl[256] = {0};
+
     LangType lang = LangCN;
 
     std::function<void(std::string)> addLog;

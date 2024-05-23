@@ -3,7 +3,7 @@
 #include <functional>
 #include <git2.h>
 
-bool git_clone_repo(AppState *state, std::string gh)
+bool git_clone_repo(AppState *state)
 {
     g_state = state;
     progress_data pd = {{0}};
@@ -21,13 +21,20 @@ bool git_clone_repo(AppState *state, std::string gh)
     clone_opts.fetch_opts.callbacks.sideband_progress = sideband_progress;
     clone_opts.fetch_opts.callbacks.transfer_progress = fetch_progress;
     clone_opts.fetch_opts.callbacks.payload = &pd;
+    clone_opts.fetch_opts.proxy_opts = GIT_PROXY_OPTIONS_INIT;
+    if (strlen(state->httpProxyUrl) > 0)
+    {
+        clone_opts.fetch_opts.proxy_opts.type = GIT_PROXY_SPECIFIED;
+        clone_opts.fetch_opts.proxy_opts.url = state->httpProxyUrl;
+    }
 
     git_repository_state_t repository_state;
     git_reference *ref = NULL, *branch = NULL;
     git_commit *target_commit = NULL;
 
     g_state->addLog("正在克隆仓库...");
-    int error = git_clone(&cloned_repo, gh.c_str(), g_state->i18nProjectDir.string().c_str(), &clone_opts);
+    int error = git_clone(&cloned_repo, g_state->i18nProjectGitUrl.c_str(), g_state->i18nProjectDir.string().c_str(),
+                          &clone_opts);
     if (error != 0)
         print_git_error(error);
 

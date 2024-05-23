@@ -60,7 +60,7 @@ static int force_checkout(git_repository *repo, git_remote *remote)
     return 0;
 }
 
-static int fetch_remote(git_repository *repo, git_remote *remote)
+static int fetch_remote(git_repository *repo, git_remote *remote, const char *http_proxy_url)
 {
     const git_indexer_progress *stats;
     git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
@@ -68,7 +68,11 @@ static int fetch_remote(git_repository *repo, git_remote *remote)
     progress_data pd = {{0}};
 
     fetch_opts.proxy_opts = GIT_PROXY_OPTIONS_INIT;
-    fetch_opts.proxy_opts.type = GIT_PROXY_NONE;
+    if (strlen(http_proxy_url))
+    {
+        fetch_opts.proxy_opts.type = GIT_PROXY_SPECIFIED;
+        fetch_opts.proxy_opts.url = http_proxy_url;
+    }
     fetch_opts.callbacks.update_tips = update_cb;
     fetch_opts.callbacks.sideband_progress = sideband_progress;
     fetch_opts.callbacks.transfer_progress = fetch_progress;
@@ -102,9 +106,10 @@ static int fetch_remote(git_repository *repo, git_remote *remote)
     return 0;
 }
 
-bool git_force_update(AppState *state, std::string gh)
+bool git_force_update(AppState *state)
 {
     g_state = state;
+    std::string &gh = state->i18nProjectGitUrl;
     git_repository *repo;
     git_remote *remote;
     bool status;
@@ -121,7 +126,7 @@ bool git_force_update(AppState *state, std::string gh)
         goto on_error;
 
     g_state->addLog(std::format("Fetching {}...", gh));
-    if (error = fetch_remote(repo, remote) < 0)
+    if (error = fetch_remote(repo, remote, state->httpProxyUrl) < 0)
         goto on_error;
     g_state->addLog(std::format("[*] Fetched {}", gh));
 

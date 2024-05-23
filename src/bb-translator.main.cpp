@@ -131,11 +131,11 @@ int gui_main()
     SettingsWindow settingWindow;
 
     // App window params
-    runnerParams.appWindowParams.windowTitle = "战场兄弟文本翻译器";
+    runnerParams.appWindowParams.windowTitle = _(MsgWindowTitle);
     runnerParams.appWindowParams.windowGeometry.size = {800, 640};
 
     // ini file params
-    runnerParams.iniFilename_useAppWindowTitle = true;
+    runnerParams.iniFilename = "BattleBrothersTranslator.ini";
     runnerParams.iniFolderType = HelloImGui::IniFolderType::AppExecutableFolder;
 
     //
@@ -219,6 +219,7 @@ int gui_main()
             dock_setting.includeInViewMenu = false;
             dock_setting.GuiFunction = [&settingWindow] { settingWindow.gui(state); };
             dock_setting.callBeginEnd = true;
+            dock_setting.rememberIsVisible = false;
         }
 
         //
@@ -374,14 +375,37 @@ int gui_main()
         setup_python(&state);
     };
 
-    runnerParams.callbacks.PostInit = []() { start_python_daemon(&state); };
+    runnerParams.callbacks.PostInit = []() {
+        if (HelloImGui::HasIniSettings(runnerParams))
+        {
+            if (HelloImGui::LoadUserPref("bb-translator.lang") == "cn")
+                state.lang = LangCN;
+            else
+                state.lang = LangEN;
+            if (auto i18nProjectGitUrl = HelloImGui::LoadUserPref("bb-translator.git-url"); i18nProjectGitUrl != "")
+            {
+                state.i18nProjectGitUrl = i18nProjectGitUrl;
+            }
+            if (auto httpProxyUrl = HelloImGui::LoadUserPref("bb-translator.http-proxy"); httpProxyUrl != "")
+            {
+                memcpy(state.httpProxyUrl, httpProxyUrl.c_str(), httpProxyUrl.size());
+            }
+        }
+        start_python_daemon(&state);
+    };
 
     // notice python daemon to stop
     runnerParams.callbacks.BeforeExit = []() {
         state.appShallExit = true;
         state.addLog = [](std::string message) { std::cout << message << std::endl; };
     };
-    runnerParams.callbacks.BeforeExit_PostCleanup = []() { shutdown_python_daemon(&state); };
+    runnerParams.callbacks.BeforeExit_PostCleanup = []() {
+        shutdown_python_daemon(&state);
+
+        HelloImGui::SaveUserPref("bb-translator.lang", state.lang == LangCN ? "cn" : "en");
+        HelloImGui::SaveUserPref("bb-translator.git-url", state.i18nProjectGitUrl);
+        HelloImGui::SaveUserPref("bb-translator.http-proxy", state.httpProxyUrl);
+    };
 
     ifd::FileDialog::Instance().CreateTexture = [](uint8_t *data, int w, int h, char fmt) -> void * {
         GLuint tex;

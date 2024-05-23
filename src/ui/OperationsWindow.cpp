@@ -184,7 +184,7 @@ void OperationsWindow::gui()
     static std::string i18nProjectVersion = state->i18nJSONDir == "" ? "" : git_head_digest(state);
 
     auto cloneCNProject = [this]() {
-        if (git_clone_repo(state, state->i18nProjectGitUrl))
+        if (git_clone_repo(state))
         {
             state->addLog(_(MsgGitCloneSuccessed));
             state->i18nJSONDir = state->i18nProjectDir / "zh_CN.UTF-8" / "json";
@@ -199,7 +199,7 @@ void OperationsWindow::gui()
     };
 
     auto fetchCNProject = [this]() {
-        if (git_force_update(state, state->i18nProjectGitUrl))
+        if (git_force_update(state))
         {
             state->addLog(_(MsgGitFetchSuccessed));
             i18nProjectVersion = git_head_digest(state);
