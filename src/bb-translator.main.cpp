@@ -386,10 +386,11 @@ int gui_main()
             {
                 state.i18nProjectGitUrl = i18nProjectGitUrl;
             }
-            if (auto httpProxyUrl = HelloImGui::LoadUserPref("bb-translator.http-proxy"); httpProxyUrl != "")
+            if (auto httpProxyUrl = trim_copy(HelloImGui::LoadUserPref("bb-translator.http-proxy")); httpProxyUrl != "")
             {
                 memcpy(state.httpProxyUrl, httpProxyUrl.c_str(), httpProxyUrl.size());
             }
+            state.addLog(std::format("HTTP PROXY: {}", state.httpProxyUrl));
         }
         start_python_daemon(&state);
     };
@@ -404,7 +405,8 @@ int gui_main()
 
         HelloImGui::SaveUserPref("bb-translator.lang", state.lang == LangCN ? "cn" : "en");
         HelloImGui::SaveUserPref("bb-translator.git-url", state.i18nProjectGitUrl);
-        HelloImGui::SaveUserPref("bb-translator.http-proxy", state.httpProxyUrl);
+        auto httpProxyUrl = trim_copy(state.httpProxyUrl);
+        HelloImGui::SaveUserPref("bb-translator.http-proxy", httpProxyUrl);
     };
 
     ifd::FileDialog::Instance().CreateTexture = [](uint8_t *data, int w, int h, char fmt) -> void * {

@@ -42,6 +42,7 @@ static constexpr enum MessageID
     MsgMissingI18nProjectError,
     MsgInitI18nProjectButton,
     MsgUpdateI18nProjectButton,
+    MsgI18nProjectButtonTooltip,
     MsgI18nProjectVersionTmpl,
 
     MsgSelectI18nJsonFolderButton,
@@ -99,6 +100,10 @@ static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID
                                MsgUpdateI18nProjectButton,
                                ICON_FA_FILE " 更新翻译项目",
                            },
+                           {
+                               MsgI18nProjectButtonTooltip,
+                               "如初始化或更新翻译项目失败, 请尝试切换 Git 仓库源。",
+                           },
                            {MsgI18nProjectVersionTmpl, "文本版本: %.20s"},
                            {MsgSelectI18nJsonFolderButton, ICON_FA_FILE " Select i18n json directory"},
                            {
@@ -155,6 +160,10 @@ static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID
                         {
                             MsgUpdateI18nProjectButton,
                             ICON_FA_FILE " 更新翻译项目",
+                        },
+                        {
+                            MsgI18nProjectButtonTooltip,
+                            "如初始化或更新翻译项目失败, 请尝试切换 Git 仓库源。",
                         },
                         {MsgI18nProjectVersionTmpl, "文本版本: %.20s"},
                         {MsgSelectI18nJsonFolderButton, ICON_FA_FILE " Select i18n json directory"},
@@ -262,6 +271,7 @@ void OperationsWindow::gui()
             ImGui::TextColored(ImVec4(0.6875f, 0.621f, 0.539f, 1.0f), _(MsgI18nProjectVersionTmpl),
                                i18nProjectVersion.c_str());
         }
+        ImGui::SetItemTooltip(_(MsgI18nProjectButtonTooltip));
         ImGui::EndDisabled();
     }
     else

@@ -10,7 +10,7 @@ static constexpr enum MessageID
     MsgGitRepoChoiceTitle,
     MsgGitRepoChoiceDirect,
     MsgGitRepoChoice__ghproxy,
-    MsgGitRepoChoice__ghclone,
+    MsgGitRepoChoice__gitclone,
     MsgGitRepoChoice__tencentcloud,
     // HttpProxy
     MsgGitHTTPProxy,
@@ -30,7 +30,7 @@ static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID
              {MsgGitRepoChoiceTitle, "Git 仓库源"},
              {MsgGitRepoChoiceDirect, "Github 直连"},
              {MsgGitRepoChoice__ghproxy, "ghproxy 代理源"},
-             {MsgGitRepoChoice__ghclone, "ghclone 代理源"},
+             {MsgGitRepoChoice__gitclone, "gitclone 代理源"},
              {MsgGitRepoChoice__tencentcloud, "边缘加速代理源"},
              // HTTP Proxy
              {MsgGitHTTPProxy, "HTTP 代理(?)"},
@@ -45,7 +45,7 @@ static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID
              {MsgGitRepoChoiceTitle, "Git Repo"},
              {MsgGitRepoChoiceDirect, "Github"},
              {MsgGitRepoChoice__ghproxy, "ghproxy proxy"},
-             {MsgGitRepoChoice__ghclone, "ghclone proxy"},
+             {MsgGitRepoChoice__gitclone, "gitclone proxy"},
              {MsgGitRepoChoice__tencentcloud, "edgeone proxy"},
              // Http Proxy
              {MsgGitHTTPProxy, "HTTP Proxy(?)"},
@@ -57,7 +57,7 @@ Please ensure you know WHAT is HTTP Proxy before you fill anything in here.)"},
 static constexpr frozen::unordered_map<MessageID, const char *, 4> i18nProjectGitUrls = {
     {MsgGitRepoChoiceDirect, "https://github.com/shabbywu/Battle-Brothers-CN.git"},
     {MsgGitRepoChoice__ghproxy, "https://mirror.ghproxy.com/https://github.com/shabbywu/Battle-Brothers-CN.git"},
-    {MsgGitRepoChoice__ghclone, "https://ghclone.com/github.com/shabbywu/Battle-Brothers-CN.git"},
+    {MsgGitRepoChoice__gitclone, "https://gitclone.com/github.com/shabbywu/Battle-Brothers-CN.git"},
     {MsgGitRepoChoice__tencentcloud, "https://ghproxy.shabbywu.cn/github.com/shabbywu/Battle-Brothers-CN.git"},
 };
 
