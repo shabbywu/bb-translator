@@ -1,19 +1,19 @@
 {
-  "dependencies": [
-    "freetype",
-    "glfw3",
-    {
-      "name": "hello-imgui",
-      "features": [
-        "glfw-binding",
-        "opengl3-binding"
-      ]
-    },
-    "physfs",
-    "pybind11",
-    "python3",
-    "libgit2",
-    "argparse",
-    "frozen"
-  ]
+    "dependencies": [
+        "freetype",
+        "glfw3",
+        {
+            "name": "hello-imgui",
+            "features": [
+                "glfw-binding",
+                "opengl3-binding"
+            ]
+        },
+        "physfs",
+        "pybind11",
+        "python3",
+        "libgit2",
+        "argparse",
+        "frozen"
+    ]
 }

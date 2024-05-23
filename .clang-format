@@ -1,0 +1,6 @@
+# We'll use defaults from the Microsoft style
+BasedOnStyle: Microsoft
+---
+Language: Cpp
+ColumnLimit: 120
+SortIncludes: false

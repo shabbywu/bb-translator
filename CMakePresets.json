@@ -1,71 +1,71 @@
 {
-  "version": 5,
-  "configurePresets": [
-    {
-      "name": "default",
-      "binaryDir": "${sourceDir}/build/${hostSystemName}",
-      "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": {
-          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-          "type": "FILEPATH"
+    "version": 5,
+    "configurePresets": [
+        {
+            "name": "default",
+            "binaryDir": "${sourceDir}/build/${hostSystemName}",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                    "type": "FILEPATH"
+                },
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/${hostSystemName}/"
+            },
+            "condition": {
+                "type": "notEquals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
         },
-        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/${hostSystemName}/"
-      },
-      "condition": {
-        "type": "notEquals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
-      "name": "windows-x86",
-      "inherits": "default",
-      "displayName": "Windows-X86 Release",
-      "description": "This build is only available on Windows",
-      "architecture": "Win32",
-      "generator": "Visual Studio 17 2022",
-      "cacheVariables": {
-        "VCPKG_TARGET_ARCHITECTURE": "x86",
-        "VCPKG_TARGET_TRIPLET": "x86-windows",
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_TOOLCHAIN_FILE": {
-          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-          "type": "FILEPATH"
+        {
+            "name": "windows-x86",
+            "inherits": "default",
+            "displayName": "Windows-X86 Release",
+            "description": "This build is only available on Windows",
+            "architecture": "Win32",
+            "generator": "Visual Studio 17 2022",
+            "cacheVariables": {
+                "VCPKG_TARGET_ARCHITECTURE": "x86",
+                "VCPKG_TARGET_TRIPLET": "x86-windows",
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                    "type": "FILEPATH"
+                }
+            },
+            "environment": {
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/.vcpkg/triplets",
+                "VCPKG_TARGET_ARCHITECTURE": "x86",
+                "VCPKG_TARGET_TRIPLET": "x86-windows"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
         }
-      },
-      "environment": {
-        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/.vcpkg/triplets",
-        "VCPKG_TARGET_ARCHITECTURE": "x86",
-        "VCPKG_TARGET_TRIPLET": "x86-windows"
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "default",
-      "configurePreset": "default",
-      "configuration": "Release",
-      "condition": {
-        "type": "notEquals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
-      "name": "windows-x86",
-      "inherits": "default",
-      "configurePreset": "windows-x86",
-      "configuration": "Release",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    }
-  ]
+    ],
+    "buildPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default",
+            "configuration": "Release",
+            "condition": {
+                "type": "notEquals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "windows-x86",
+            "inherits": "default",
+            "configurePreset": "windows-x86",
+            "configuration": "Release",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        }
+    ]
 }

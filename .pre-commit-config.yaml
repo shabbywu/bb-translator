@@ -71,4 +71,3 @@ repos:
   rev: v18.1.5
   hooks:
   - id: clang-format
-    args: [--sort-includes=false]

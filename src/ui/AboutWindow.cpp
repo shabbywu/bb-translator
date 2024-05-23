@@ -4,19 +4,18 @@
 #include "imgui_utilities/MarkdownHelper.h"
 #include <frozen/unordered_map.h>
 
-static constexpr enum MessageID {
-  MsgHelp,
-  MsgUsageButton,
-  MsgGithubStarButton,
-  // trick to get enum size
-  MsgEnumTotalSize,
+static constexpr enum MessageID
+{
+    MsgHelp,
+    MsgUsageButton,
+    MsgGithubStarButton,
+    // trick to get enum size
+    MsgEnumTotalSize,
 };
 
 #define _(MessageID) i18nMessage.at(state.lang).at(MessageID)
 
-static constexpr frozen::unordered_map<
-    LangType, frozen::unordered_map<MessageID, const char *, MsgEnumTotalSize>,
-    2>
+static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID, const char *, MsgEnumTotalSize>, 2>
     i18nMessage = {{LangCN,
                     {
                         {MsgHelp, R"(
@@ -46,15 +45,17 @@ This tool is developed by the Battlefield Brothers Chinese localization team.
                         {MsgGithubStarButton, ICON_FA_THUMBS_UP " Github Star"},
                     }}};
 
-void AboutWindow::gui(AppState &state) {
-  MarkdownHelper::Markdown(_(MsgHelp));
-  if (ImGui::Button(_(MsgUsageButton))) {
-    HelloImGui::DockableWindow *usageWindow =
-        runnerParams->dockingParams.dockableWindowOfName("使用说明");
-    usageWindow->isVisible = true;
-  }
-  ImGuiExt::SameLine_IfPossible();
-  if (ImGui::Button(_(MsgGithubStarButton))) {
-    HyperlinkHelper::OpenUrl("https://github.com/shabbywu/bb-translator");
-  }
+void AboutWindow::gui(AppState &state)
+{
+    MarkdownHelper::Markdown(_(MsgHelp));
+    if (ImGui::Button(_(MsgUsageButton)))
+    {
+        HelloImGui::DockableWindow *usageWindow = runnerParams->dockingParams.dockableWindowOfName("使用说明");
+        usageWindow->isVisible = true;
+    }
+    ImGuiExt::SameLine_IfPossible();
+    if (ImGui::Button(_(MsgGithubStarButton)))
+    {
+        HyperlinkHelper::OpenUrl("https://github.com/shabbywu/bb-translator");
+    }
 }

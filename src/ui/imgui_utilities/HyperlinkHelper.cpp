@@ -12,19 +12,21 @@
 
 #include "HyperlinkHelper.h"
 
-namespace HyperlinkHelper {
-void OpenUrl(const std::string &url) {
-  bool isAbsoluteUrl = fplus::is_prefix_of(std::string("http"), url);
-  if (!isAbsoluteUrl)
-    return;
+namespace HyperlinkHelper
+{
+void OpenUrl(const std::string &url)
+{
+    bool isAbsoluteUrl = fplus::is_prefix_of(std::string("http"), url);
+    if (!isAbsoluteUrl)
+        return;
 #if defined(__EMSCRIPTEN__)
-  std::string js_command = "window.open(\"" + url + "\");";
-  emscripten_run_script(js_command.c_str());
+    std::string js_command = "window.open(\"" + url + "\");";
+    emscripten_run_script(js_command.c_str());
 #elif defined(_WIN32)
-  ShellExecuteA(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+    ShellExecuteA(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
 #elif defined(TARGET_OS_MAC)
-  std::string cmd = std::string("open ") + url.c_str();
-  system(cmd.c_str());
+    std::string cmd = std::string("open ") + url.c_str();
+    system(cmd.c_str());
 #endif
 }
 

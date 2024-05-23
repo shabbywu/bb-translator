@@ -1,9 +1,11 @@
 #pragma once
 #include "AppState.h"
 
-class UsageWindow
+class SettingsWindow
 {
   public:
-    UsageWindow() {};
+    SettingsWindow()
+    {
+    }
     void gui(AppState &);
 };
