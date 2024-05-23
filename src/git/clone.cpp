@@ -26,6 +26,7 @@ bool git_clone_repo(AppState *state)
     {
         clone_opts.fetch_opts.proxy_opts.type = GIT_PROXY_SPECIFIED;
         clone_opts.fetch_opts.proxy_opts.url = state->httpProxyUrl;
+        state->addLog(std::format("clone with http proxy: {}", state->httpProxyUrl));
     }
 
     git_repository_state_t repository_state;

@@ -72,6 +72,7 @@ static int fetch_remote(git_repository *repo, git_remote *remote, const char *ht
     {
         fetch_opts.proxy_opts.type = GIT_PROXY_SPECIFIED;
         fetch_opts.proxy_opts.url = http_proxy_url;
+        g_state->addLog(std::format("fetch with http proxy: {}", g_state->httpProxyUrl));
     }
     fetch_opts.callbacks.update_tips = update_cb;
     fetch_opts.callbacks.sideband_progress = sideband_progress;

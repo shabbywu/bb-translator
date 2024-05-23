@@ -253,6 +253,7 @@ void OperationsWindow::gui()
                     state->addLog(_(MsgTaskRunningError));
                 }
             }
+            ImGui::SetItemTooltip(_(MsgI18nProjectButtonTooltip));
         }
         else
         {
@@ -268,10 +269,10 @@ void OperationsWindow::gui()
                     state->addLog(_(MsgTaskRunningError));
                 }
             }
+            ImGui::SetItemTooltip(_(MsgI18nProjectButtonTooltip));
             ImGui::TextColored(ImVec4(0.6875f, 0.621f, 0.539f, 1.0f), _(MsgI18nProjectVersionTmpl),
                                i18nProjectVersion.c_str());
         }
-        ImGui::SetItemTooltip(_(MsgI18nProjectButtonTooltip));
         ImGui::EndDisabled();
     }
     else
