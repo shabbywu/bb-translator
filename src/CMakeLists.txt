@@ -57,7 +57,7 @@ if(WIN32)
   _hello_imgui_add_windows_icon(bb_translator ${assets_dir}/favicon.ico)
 endif()
 if(DEFINED ENV{BB_TRANSLATOR_VERSION})
-  MESSAGE(NOTICE BB_TRANSLATOR_VERSION="$ENV{BB_TRANSLATOR_VERSION}")
-  target_add_definitions(
-    bb_translator -DBB_TRANSLATOR_VERSION="$ENV{BB_TRANSLATOR_VERSION}")
+  message(NOTICE BB_TRANSLATOR_VERSION="$ENV{BB_TRANSLATOR_VERSION}")
+  target_compile_definitions(
+    bb_translator PUBLIC -DBB_TRANSLATOR_VERSION="$ENV{BB_TRANSLATOR_VERSION}")
 endif()
