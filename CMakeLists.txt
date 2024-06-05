@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.13)
 set(CMAKE_CXX_STANDARD 20)
 
 set(GLFW_LIBRARY_TYPE "STATIC")
-set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/.vcpkg/ports/physfs"
-                        "${CMAKE_CURRENT_LIST_DIR}/.vcpkg/ports/glfw3")
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/.vcpkg/triplets")
 # Enable VCPKG if VCPKG_ROOT defined.
 set(vcpkg "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
