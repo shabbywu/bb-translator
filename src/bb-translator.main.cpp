@@ -23,6 +23,7 @@
 #include "ui/OperationsWindow.h"
 #include "ui/SettingsWindow.h"
 #include "ui/UsageWindow.h"
+#include "utf8.h"
 
 using namespace std::chrono_literals;
 HelloImGui::RunnerParams runnerParams;
@@ -372,8 +373,8 @@ int gui_main()
             }
             git_init();
         }
-
-        HelloImGui::SetAssetsFolder(state.assetsDir.string());
+        
+        HelloImGui::SetAssetsFolder(acp_to_utf8(state.assetsDir.string()));
         setup_python(&state);
     };
 
