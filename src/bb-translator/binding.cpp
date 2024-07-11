@@ -10,6 +10,7 @@
 #include <zip.h>
 
 #include "binding.h"
+#include "../utf8.h"
 #include <bundle/base_library.h>
 #include <bundle/bb_translator.h>
 #include <bundle/purepython.h>
@@ -107,11 +108,18 @@ void setup_python(AppState *state)
         {
             auto &pythonZip = bin2cpp::getPythonZipFile();
             auto path = state->pythonRootDir.string();
-            auto c_path = (const char *)path.c_str();
-            zip_stream_extract(pythonZip.getBuffer(), pythonZip.getSize(), c_path, nullptr, nullptr);
-            std::ofstream f(state->pythonRootDir / ".binary.unzip.v1",
-                            std::ios::out | std::ios::binary | std::ios::trunc);
-            f.close();
+            if (auto error_code =
+                    zip_stream_extract(pythonZip.getBuffer(), pythonZip.getSize(), path.data(), nullptr, nullptr);
+                error_code < 0)
+            {
+                std::cout << "failed to extract binary: " << zip_strerror(error_code) << std::endl;
+            }
+            else
+            {
+                std::ofstream f(state->pythonRootDir / ".binary.unzip.v1",
+                                std::ios::out | std::ios::binary | std::ios::trunc);
+                f.close();
+            }
         }
 
 #ifdef _WIN32

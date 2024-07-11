@@ -331,6 +331,19 @@ int gui_main()
         std::filesystem::path userConfigFolder =
             HelloImGui::IniFolderLocation(HelloImGui::IniFolderType::AppUserConfigFolder);
 
+        if (userConfigFolder.string() != acp_to_utf8(userConfigFolder.string()))
+        {
+            userConfigFolder = std::filesystem::current_path() / ".temp";
+            std::filesystem::create_directories(userConfigFolder);
+
+            std::ofstream f(userConfigFolder / "README.txt", std::ios::out | std::ios::binary | std::ios::trunc);
+
+            f << "该目录存放的是临时文件, 仅当你的用户名有特殊字符时会创建该目录, 该目录可随意删除\r\n";
+            f << utf8_to_acp(
+                std::string("该目录存放的是临时文件, 仅当你的用户名有特殊字符时会创建该目录, 该目录可随意删除\r\n"));
+            f.close();
+        }
+
         auto appFolder = userConfigFolder / "bb-translator";
         state.assetsDir = appFolder / "assets";
         state.pythonRootDir = appFolder / "binary";
@@ -373,7 +386,7 @@ int gui_main()
             }
             git_init();
         }
-        
+
         HelloImGui::SetAssetsFolder(acp_to_utf8(state.assetsDir.string()));
         setup_python(&state);
     };
