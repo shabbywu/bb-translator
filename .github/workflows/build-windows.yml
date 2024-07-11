@@ -2,6 +2,10 @@ name: Build-Windows
 
 on:
   workflow_dispatch:
+    inputs:
+      show-console:
+        type: boolean
+        description: Show window terminal console for more debug message?
   release:
     types: [published]
 
@@ -15,6 +19,8 @@ jobs:
     env:
       VCPKG_DEFAULT_TRIPLET: "x86-windows"
       BB_TRANSLATOR_VERSION: ${{ (github.event_name == 'release' && github.event.action == 'published') && github.ref_name || github.sha }}
+      BB_SHOW_CONSOLE: ${{ github.event.inputs.show-console }}
+
     steps:
     - uses: actions/checkout@v4
       with:

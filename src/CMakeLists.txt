@@ -52,8 +52,15 @@ function(_hello_imgui_add_windows_icon app_name ico_location)
   target_sources(${app_name} PRIVATE ${icon_rc_file})
 endfunction()
 if(WIN32)
-  target_link_options(bb_translator PRIVATE "/SUBSYSTEM:WINDOWS"
-                      "/ENTRY:mainCRTStartup")
+  if((DEFINED ENV{BB_SHOW_CONSOLE}) AND ($ENV{BB_SHOW_CONSOLE}))
+    message("SUBSYSTEM:CONSOLE")
+    target_link_options(bb_translator PRIVATE "/SUBSYSTEM:CONSOLE"
+                        "/ENTRY:mainCRTStartup")
+  else()
+    message("SUBSYSTEM:WINDOWS")
+    target_link_options(bb_translator PRIVATE "/SUBSYSTEM:WINDOWS"
+                        "/ENTRY:mainCRTStartup")
+  endif()
   _hello_imgui_add_windows_icon(bb_translator ${assets_dir}/favicon.ico)
 endif()
 if(DEFINED ENV{BB_TRANSLATOR_VERSION})
