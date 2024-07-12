@@ -274,7 +274,7 @@ void OperationsWindow::gui()
                 ImGui::TextColored(ImVec4(0.6875f, 0.621f, 0.539f, 1.0f), _(MsgI18nProjectVersionTmpl),
                                    i18nProjectVersion.c_str());
             else
-                ImGui::TextColored(ImVec4(0.6875f, 0.621f, 0.539f, 1.0f), "读取文本版本失败");
+                ImGui::TextColored(ImVec4(0.6875f, 0.621f, 0.539f, 1.0f), "读取文本版本失败, 请删除翻译项目后重新初始化");
         }
         ImGui::EndDisabled();
     }
