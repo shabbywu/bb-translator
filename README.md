@@ -1,6 +1,9 @@
 # bb-translator
 bb-translator 是 Battle Brothers(战场兄弟) 的文本翻译器, 翻译器使用[本地化项目](https://github.com/shabbywu/Battle-Brothers-CN)的词条文件翻译 data 目录下的游戏脚本。
 
+> # 重要说明
+> 1. 使用翻译器翻译文本后，需要使用 [启动器](https://www.nexusmods.com/battlebrothers/mods/719)启动游戏, 否则大地图会出现乱码
+> 2. 安装新 Mod 后, 需要重新翻译文本.
 
 主要特性:
 - 使用 physfs 读取文件, 实现了与游戏同样的加载方式和顺序
