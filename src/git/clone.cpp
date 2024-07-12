@@ -43,16 +43,17 @@ bool git_clone_repo(AppState *state)
     {
         git_reference *head;
         error = git_repository_head(&head, cloned_repo);
-        if (error != 0)
-            print_git_error(error) else
-            {
-                char head_digist[GIT_OID_SHA1_HEXSIZE + 1];
-                auto oid = git_reference_target(head);
-                git_oid_fmt(head_digist, oid);
-                head_digist[GIT_OID_SHA1_HEXSIZE] = '\0';
-                g_state->addLog(std::format("当前汉化版本: {}", head_digist));
-                git_reference_free(head);
-            }
+        if (error)
+            print_git_error(error);
+        else
+        {
+            char head_digist[GIT_OID_SHA1_HEXSIZE + 1];
+            auto oid = git_reference_target(head);
+            git_oid_fmt(head_digist, oid);
+            head_digist[GIT_OID_SHA1_HEXSIZE] = '\0';
+            g_state->addLog(std::format("当前汉化版本: {}", head_digist));
+            git_reference_free(head);
+        }
         git_repository_free(cloned_repo);
     }
     return error == 0;

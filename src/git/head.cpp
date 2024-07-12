@@ -6,6 +6,7 @@
 
 std::string git_head_digest(AppState *state)
 {
+    g_state = state;
     git_repository *repo;
     git_reference *head;
     const git_oid *oid;

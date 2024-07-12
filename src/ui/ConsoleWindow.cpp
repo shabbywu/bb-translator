@@ -33,7 +33,10 @@ static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID
 
 ConsoleWindow::ConsoleWindow(AppState *state)
 {
-    state->addLog = [this](std::string message) { this->AddLog(message.c_str()); };
+    state->addLog = [this](std::string message) {
+        std::cout << message << std::endl;
+        this->AddLog(message.c_str());
+    };
     ClearLog();
     memset(InputBuf, 0, sizeof(InputBuf));
     HistoryPos = -1;

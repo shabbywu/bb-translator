@@ -270,8 +270,11 @@ void OperationsWindow::gui()
                 }
             }
             ImGui::SetItemTooltip(_(MsgI18nProjectButtonTooltip));
-            ImGui::TextColored(ImVec4(0.6875f, 0.621f, 0.539f, 1.0f), _(MsgI18nProjectVersionTmpl),
-                               i18nProjectVersion.c_str());
+            if (i18nProjectVersion != "")
+                ImGui::TextColored(ImVec4(0.6875f, 0.621f, 0.539f, 1.0f), _(MsgI18nProjectVersionTmpl),
+                                   i18nProjectVersion.c_str());
+            else
+                ImGui::TextColored(ImVec4(0.6875f, 0.621f, 0.539f, 1.0f), "读取文本版本失败");
         }
         ImGui::EndDisabled();
     }

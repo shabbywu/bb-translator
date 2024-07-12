@@ -112,8 +112,80 @@ static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID
                      {MsgOpenTerminal, "Open terminal"},
                  }}};
 
+int try_uncompress_assets(std::filesystem::path assetsDir)
+{
+    auto fontsFolder = assetsDir / "fonts";
+    if (!std::filesystem::exists(fontsFolder))
+    {
+        std::filesystem::create_directories(fontsFolder);
+        {
+            auto &font = bin2cpp::getFontTtfFile();
+            auto fontFilename = fontsFolder / font.getFileName();
+            std::ofstream f(fontFilename, std::ios::out | std::ios::binary | std::ios::trunc);
+            if (f.fail())
+                return -1;
+            f.write((const char *)font.getBuffer(), font.getSize());
+            f.close();
+        }
+
+        {
+            auto &font = bin2cpp::getFontawesomewebfontTtfFile();
+            auto fontFilename = fontsFolder / font.getFileName();
+            std::ofstream f(fontFilename, std::ios::out | std::ios::binary | std::ios::trunc);
+            if (f.fail())
+                return -1;
+            f.write((const char *)font.getBuffer(), font.getSize());
+            f.close();
+        }
+    }
+
+    auto backgroundFilename = assetsDir / "background.jpeg";
+    if (!std::filesystem::exists(backgroundFilename))
+    {
+        auto &file = bin2cpp::getLoading_screen_11JpegFile();
+        std::ofstream f(backgroundFilename, std::ios::out | std::ios::binary | std::ios::trunc);
+        if (f.fail())
+            return -1;
+        f.write((const char *)file.getBuffer(), file.getSize());
+        f.close();
+    }
+}
+
 int gui_main()
 {
+    // setup assets
+    {
+        {
+            std::filesystem::path userConfigFolder =
+                HelloImGui::IniFolderLocation(HelloImGui::IniFolderType::AppUserConfigFolder);
+
+#ifdef _WIN32
+            if (userConfigFolder.string() != acp_to_utf8(userConfigFolder.string()))
+            {
+                userConfigFolder = std::filesystem::current_path() / ".temp";
+                std::filesystem::create_directories(userConfigFolder);
+
+                std::ofstream f(userConfigFolder / "README.txt", std::ios::out | std::ios::binary | std::ios::trunc);
+
+                f << "该目录存放的是临时文件, 仅当你的用户名有特殊字符时会创建该目录, 该目录可随意删除\r\n";
+                f << utf8_to_acp(std::string(
+                    "该目录存放的是临时文件, 仅当你的用户名有特殊字符时会创建该目录, 该目录可随意删除\r\n"));
+                f.close();
+            }
+#endif
+
+            auto appFolder = userConfigFolder / "bb-translator";
+            state.assetsDir = appFolder / "assets";
+            state.pythonRootDir = appFolder / "binary";
+        }
+        try_uncompress_assets(state.assetsDir);
+        HelloImGui::SetAssetsFolder(state.assetsDir.string());
+    }
+
+    // init git
+    git_init();
+
+    // init i18n project state
     {
         auto current_path = std::filesystem::current_path();
         if (std::filesystem::exists(current_path / "data") && std::filesystem::exists(current_path / "win32"))
@@ -326,71 +398,6 @@ int gui_main()
         // glClear(GL_COLOR_BUFFER_BIT);
     };
 
-    // start python daemon after init
-    runnerParams.callbacks.PostInit_AddPlatformBackendCallbacks = []() {
-        std::filesystem::path userConfigFolder =
-            HelloImGui::IniFolderLocation(HelloImGui::IniFolderType::AppUserConfigFolder);
-
-        if (userConfigFolder.string() != acp_to_utf8(userConfigFolder.string()))
-        {
-            userConfigFolder = std::filesystem::current_path() / ".temp";
-            std::filesystem::create_directories(userConfigFolder);
-
-            std::ofstream f(userConfigFolder / "README.txt", std::ios::out | std::ios::binary | std::ios::trunc);
-
-            f << "该目录存放的是临时文件, 仅当你的用户名有特殊字符时会创建该目录, 该目录可随意删除\r\n";
-            f << utf8_to_acp(
-                std::string("该目录存放的是临时文件, 仅当你的用户名有特殊字符时会创建该目录, 该目录可随意删除\r\n"));
-            f.close();
-        }
-
-        auto appFolder = userConfigFolder / "bb-translator";
-        state.assetsDir = appFolder / "assets";
-        state.pythonRootDir = appFolder / "binary";
-
-        {
-            auto fontsFolder = state.assetsDir / "fonts";
-            if (!std::filesystem::exists(fontsFolder))
-            {
-                std::filesystem::create_directories(fontsFolder);
-                {
-                    auto &font = bin2cpp::getFontTtfFile();
-                    auto fontFilename = fontsFolder / font.getFileName();
-                    std::ofstream f(fontFilename, std::ios::out | std::ios::binary | std::ios::trunc);
-                    if (f.fail())
-                        return;
-                    f.write((const char *)font.getBuffer(), font.getSize());
-                    f.close();
-                }
-
-                {
-                    auto &font = bin2cpp::getFontawesomewebfontTtfFile();
-                    auto fontFilename = fontsFolder / font.getFileName();
-                    std::ofstream f(fontFilename, std::ios::out | std::ios::binary | std::ios::trunc);
-                    if (f.fail())
-                        return;
-                    f.write((const char *)font.getBuffer(), font.getSize());
-                    f.close();
-                }
-            }
-
-            auto backgroundFilename = state.assetsDir / "background.jpeg";
-            if (!std::filesystem::exists(backgroundFilename))
-            {
-                auto &file = bin2cpp::getLoading_screen_11JpegFile();
-                std::ofstream f(backgroundFilename, std::ios::out | std::ios::binary | std::ios::trunc);
-                if (f.fail())
-                    return;
-                f.write((const char *)file.getBuffer(), file.getSize());
-                f.close();
-            }
-            git_init();
-        }
-
-        HelloImGui::SetAssetsFolder(acp_to_utf8(state.assetsDir.string()));
-        setup_python(&state);
-    };
-
     runnerParams.callbacks.PostInit = []() {
         if (HelloImGui::HasIniSettings(runnerParams))
         {
@@ -408,6 +415,8 @@ int gui_main()
                 memcpy(state.httpProxyUrl, httpProxyUrl.c_str(), httpProxyUrl.size());
             }
         }
+        // start python daemon after init
+        setup_python(&state);
         start_python_daemon(&state);
     };
 

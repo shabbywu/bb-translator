@@ -10,7 +10,6 @@
 #include <zip.h>
 
 #include "binding.h"
-#include "../utf8.h"
 #include <bundle/base_library.h>
 #include <bundle/bb_translator.h>
 #include <bundle/purepython.h>
@@ -86,11 +85,36 @@ void setup_python(AppState *state)
 {
     {
         putenv("PYTHONIOENCODING=utf-8");
-        // 设置目录
-        const auto pythonRootDir = (state->pythonRootDir).wstring();
+        // 解压缩资源
+        // 判断版本标记位, 不一致时清空文件夹
+        auto version_flag = ".binary.unzip.v2";
+        if (std::filesystem::exists(state->pythonRootDir) &&
+            !std::filesystem::exists(state->pythonRootDir / version_flag))
+        {
+            std::filesystem::remove_all(state->pythonRootDir);
+        }
+
         if (!std::filesystem::exists(state->pythonRootDir))
         {
             std::filesystem::create_directories(state->pythonRootDir);
+        }
+
+        if (!std::filesystem::exists(state->pythonRootDir / version_flag))
+        {
+            auto &pythonZip = bin2cpp::getPythonZipFile();
+            auto path = state->pythonRootDir.string();
+            if (auto error_code =
+                    zip_stream_extract(pythonZip.getBuffer(), pythonZip.getSize(), path.data(), nullptr, nullptr);
+                error_code < 0)
+            {
+                std::cout << "failed to extract binary: " << zip_strerror(error_code) << std::endl;
+            }
+            else
+            {
+                std::ofstream f(state->pythonRootDir / version_flag,
+                                std::ios::out | std::ios::binary | std::ios::trunc);
+                f.close();
+            }
         }
 
         auto &pybaseLibrary = bin2cpp::getBase_libraryZipFile();
@@ -104,24 +128,8 @@ void setup_python(AppState *state)
             f.close();
         }
 
-        if (!std::filesystem::exists(state->pythonRootDir / ".binary.unzip.v1"))
-        {
-            auto &pythonZip = bin2cpp::getPythonZipFile();
-            auto path = state->pythonRootDir.string();
-            if (auto error_code =
-                    zip_stream_extract(pythonZip.getBuffer(), pythonZip.getSize(), path.data(), nullptr, nullptr);
-                error_code < 0)
-            {
-                std::cout << "failed to extract binary: " << zip_strerror(error_code) << std::endl;
-            }
-            else
-            {
-                std::ofstream f(state->pythonRootDir / ".binary.unzip.v1",
-                                std::ios::out | std::ios::binary | std::ios::trunc);
-                f.close();
-            }
-        }
-
+        // 设置目录
+        const auto pythonRootDir = (state->pythonRootDir).wstring();
 #ifdef _WIN32
         auto pythonHome = pythonRootDir + L"\\";
         auto pythonPath = pythonRootDir + L"\\base_library.zip;" + pythonRootDir + L";";

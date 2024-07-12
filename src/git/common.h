@@ -83,15 +83,15 @@ static void checkout_progress(const char *path, size_t cur, size_t tot, void *pa
     print_progress(pd);
 }
 
-#define print_git_error(error)                                                                                         \
-    {                                                                                                                  \
-        const git_error *err = git_error_last();                                                                       \
-        if (err)                                                                                                       \
-        {                                                                                                              \
-            g_state->addLog(std::format("ERROR {}: {}\n", err->klass, err->message));                                  \
-        }                                                                                                              \
-        else                                                                                                           \
-        {                                                                                                              \
-            g_state->addLog(std::format("ERROR {}: no detailed info\n", error));                                       \
-        }                                                                                                              \
+static inline void print_git_error(int error)
+{
+    const git_error *err = git_error_last();
+    if (err)
+    {
+        g_state->addLog(std::format("[error] {}: {}\n", err->klass, err->message));
     }
+    else
+    {
+        g_state->addLog(std::format("[error] {}: no detailed info\n", error));
+    }
+}
