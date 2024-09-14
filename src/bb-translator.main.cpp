@@ -24,6 +24,11 @@
 #include "ui/SettingsWindow.h"
 #include "ui/UsageWindow.h"
 #include "utf8.h"
+#include "debug.hpp"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 using namespace std::chrono_literals;
 HelloImGui::RunnerParams runnerParams;
@@ -183,10 +188,14 @@ int gui_main()
     }
 
     // init git
-    git_init();
+    {
+        debug::time_guard guard{"init git"};
+        git_init();
+    }
 
     // init i18n project state
     {
+        debug::time_guard guard{"init i18n project state"};
         auto current_path = std::filesystem::current_path();
         if (std::filesystem::exists(current_path / "data") && std::filesystem::exists(current_path / "win32"))
         {
@@ -240,6 +249,7 @@ int gui_main()
     // Dockable windows definitions
     //
     {
+        debug::time_guard guard{"init dockable gui windows"};
         HelloImGui::DockableWindow dock_tools;
         {
             dock_tools.label = "操作面板";
@@ -303,13 +313,14 @@ int gui_main()
         runnerParams.dockingParams.dockableWindows = {
             dock_tools, dock_console, dock_usage, dock_about, dock_setting,
         };
-    }
 
-    runnerParams.dockingParams.mainDockSpaceNodeFlags =
-        ImGuiDockNodeFlags_NoDockingSplit | ImGuiDockNodeFlags_AutoHideTabBar;
+        runnerParams.dockingParams.mainDockSpaceNodeFlags =
+            ImGuiDockNodeFlags_NoDockingSplit | ImGuiDockNodeFlags_AutoHideTabBar;
+    }
 
     // Set the custom fonts
     runnerParams.callbacks.LoadAdditionalFonts = []() {
+        debug::time_guard guard{"loading additional fonts"};
         FontLoader::LoadDefaultFont();
         MarkdownHelper::LoadFonts();
     };
@@ -398,7 +409,12 @@ int gui_main()
         // glClear(GL_COLOR_BUFFER_BIT);
     };
 
+    runnerParams.callbacks.PostInit_AddPlatformBackendCallbacks = []() {
+        debug::time_guard guard{"post init platform backend"};
+    };
+
     runnerParams.callbacks.PostInit = []() {
+        debug::time_guard guard{"post init"};
         if (HelloImGui::HasIniSettings(runnerParams))
         {
             if (trim_copy(HelloImGui::LoadUserPref("bb-translator.lang")) != "cn")
@@ -422,6 +438,7 @@ int gui_main()
 
     // notice python daemon to stop
     runnerParams.callbacks.BeforeExit = []() {
+        debug::time_guard guard{"before exit"};
         state.appShallExit = true;
         state.addLog = [](std::string message) { std::cout << message << std::endl; };
     };
@@ -455,12 +472,21 @@ int gui_main()
         glDeleteTextures(1, &texID);
     };
 
+    std::cout << "[*] Before Run GUI" << std::endl;
+
     HelloImGui::Run(runnerParams);
     return 0;
 }
 
 int main(int argc, char *argv[])
 {
+#ifdef _WIN32
+    if (AttachConsole(ATTACH_PARENT_PROCESS))
+    {
+        freopen("CONOUT$", "w", stdout);
+    }
+#endif
+
     if (argc == 1)
     {
         return gui_main();

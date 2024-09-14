@@ -10,6 +10,7 @@
 #include <zip.h>
 
 #include "binding.h"
+#include "../debug.hpp"
 #include <bundle/base_library.h>
 #include <bundle/bb_translator.h>
 #include <bundle/purepython.h>
@@ -84,6 +85,7 @@ void daemon_worker_thread(AppState *state)
 void setup_python(AppState *state)
 {
     {
+        debug::time_guard guard{"setup pyenv"};
         putenv("PYTHONIOENCODING=utf-8");
         // 解压缩资源
         // 判断版本标记位, 不一致时清空文件夹
@@ -127,7 +129,10 @@ void setup_python(AppState *state)
             f.write((const char *)pybaseLibrary.getBuffer(), pybaseLibrary.getSize());
             f.close();
         }
+    }
 
+    {
+        debug::time_guard guard{"init python"};
         // 设置目录
         const auto pythonRootDir = (state->pythonRootDir).wstring();
 #ifdef _WIN32
@@ -142,7 +147,7 @@ void setup_python(AppState *state)
         Py_SetProgramName(L"bb-translator");
         Py_SetPath(pythonPath.c_str());
 
-        guard = std::make_unique<py::scoped_interpreter>();
+        ::guard = std::make_unique<py::scoped_interpreter>();
         // ensure python object will release before gil_scoped_release
         {
             auto physfs = py::module_::import("memory_importer.physfs");

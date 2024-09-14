@@ -80,17 +80,9 @@ class FileDialog
     class FileTreeNode
     {
       public:
-#ifdef _WIN32
-        FileTreeNode(const std::wstring &path)
+        FileTreeNode(std::filesystem::path path)
         {
-            Path = std::filesystem::path(path);
-            Read = false;
-        }
-#endif
-
-        FileTreeNode(const std::string &path)
-        {
-            Path = std::filesystem::u8path(path);
+            Path = path;
             Read = false;
         }
 

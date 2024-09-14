@@ -387,8 +387,8 @@ FileDialog::FileData::FileData(const std::filesystem::path &path)
     IsDirectory = std::filesystem::is_directory(path, ec);
     Size = std::filesystem::file_size(path, ec);
 
-    struct stat attr;
-    stat(path.string().c_str(), &attr);
+    struct _stat64i32 attr;
+    _wstat(path.c_str(), &attr);
     DateModified = attr.st_ctime;
 
     HasIconPreview = false;
@@ -424,33 +424,34 @@ FileDialog::FileDialog()
     m_treeCache.push_back(quickAccess);
 
 #ifdef _WIN32
-    wchar_t username[UNLEN + 1] = {0};
+    char username[UNLEN + 1] = {0};
     DWORD username_len = UNLEN + 1;
-    GetUserNameW(username, &username_len);
+    GetUserName(username, &username_len);
 
-    std::wstring userPath = L"C:\\Users\\" + std::wstring(username) + L"\\";
+    std::filesystem::path diskC = "C:\\";
+    auto userPath = diskC / username;
 
     // Quick Access / Bookmarks
-    quickAccess->Children.push_back(new FileTreeNode(userPath + L"Desktop"));
-    quickAccess->Children.push_back(new FileTreeNode(userPath + L"Documents"));
-    quickAccess->Children.push_back(new FileTreeNode(userPath + L"Downloads"));
-    quickAccess->Children.push_back(new FileTreeNode(userPath + L"Pictures"));
+    quickAccess->Children.push_back(new FileTreeNode(userPath / "Desktop"));
+    quickAccess->Children.push_back(new FileTreeNode(userPath / "Documents"));
+    quickAccess->Children.push_back(new FileTreeNode(userPath / "Downloads"));
+    quickAccess->Children.push_back(new FileTreeNode(userPath / "Pictures"));
 
     // OneDrive
-    FileTreeNode *oneDrive = new FileTreeNode(userPath + L"OneDrive");
+    FileTreeNode *oneDrive = new FileTreeNode(userPath / "OneDrive");
     m_treeCache.push_back(oneDrive);
 
     // This PC
     FileTreeNode *thisPC = new FileTreeNode("This PC");
     thisPC->Read = true;
-    if (std::filesystem::exists(userPath + L"3D Objects"))
-        thisPC->Children.push_back(new FileTreeNode(userPath + L"3D Objects"));
-    thisPC->Children.push_back(new FileTreeNode(userPath + L"Desktop"));
-    thisPC->Children.push_back(new FileTreeNode(userPath + L"Documents"));
-    thisPC->Children.push_back(new FileTreeNode(userPath + L"Downloads"));
-    thisPC->Children.push_back(new FileTreeNode(userPath + L"Music"));
-    thisPC->Children.push_back(new FileTreeNode(userPath + L"Pictures"));
-    thisPC->Children.push_back(new FileTreeNode(userPath + L"Videos"));
+    if (std::filesystem::exists(userPath / "3D Objects"))
+        thisPC->Children.push_back(new FileTreeNode(userPath / "3D Objects"));
+    thisPC->Children.push_back(new FileTreeNode(userPath / "Desktop"));
+    thisPC->Children.push_back(new FileTreeNode(userPath / "Documents"));
+    thisPC->Children.push_back(new FileTreeNode(userPath / "Downloads"));
+    thisPC->Children.push_back(new FileTreeNode(userPath / "Music"));
+    thisPC->Children.push_back(new FileTreeNode(userPath / "Pictures"));
+    thisPC->Children.push_back(new FileTreeNode(userPath / "Videos"));
     DWORD d = GetLogicalDrives();
     for (int i = 0; i < 26; i++)
         if (d & (1 << i))
@@ -1121,7 +1122,6 @@ void FileDialog::m_setDirectory(const std::filesystem::path &p, bool addHistory)
                 m_content.push_back(info);
             }
     }
-
     m_sortContent(m_sortColumn, m_sortDirection);
     m_refreshIconPreview();
 }
@@ -1147,8 +1147,8 @@ void FileDialog::m_sortContent(unsigned int column, unsigned int sortDirection)
             // name
             if (column == 0)
             {
-                std::string lName = left.Path.string();
-                std::string rName = right.Path.string();
+                auto lName = left.Path.wstring();
+                auto rName = right.Path.wstring();
 
                 std::transform(lName.begin(), lName.end(), lName.begin(), ::tolower);
                 std::transform(rName.begin(), rName.end(), rName.begin(), ::tolower);
