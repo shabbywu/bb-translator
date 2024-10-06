@@ -89,7 +89,7 @@ void setup_python(AppState *state)
         putenv("PYTHONIOENCODING=utf-8");
         // 解压缩资源
         // 判断版本标记位, 不一致时清空文件夹
-        auto version_flag = ".binary.unzip.v2";
+        auto version_flag = ".binary.unzip.v3";
         if (std::filesystem::exists(state->pythonRootDir) &&
             !std::filesystem::exists(state->pythonRootDir / version_flag))
         {
