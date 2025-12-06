@@ -248,7 +248,7 @@ void OperationsWindow::gui()
     {
         // 初始化中文本地化项目的按钮
         ImGui::BeginDisabled(i18nProjectStatus == I18NProjectStatus::Unknown);
-        if (i18nProjectStatus != I18NProjectStatus::Existed)
+        if (i18nProjectStatus != I18NProjectStatus::Existed && !std::filesystem::exists(state->i18nProjectDir / ".git"))
         {
             if (ImGui::Button(_(MsgInitI18nProjectButton), ImVec2(0, 40)))
             {
