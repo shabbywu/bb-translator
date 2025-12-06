@@ -27,7 +27,7 @@ jobs:
         submodules: 'recursive'
         token: ${{ secrets.PRIVATE_TOKEN }}
 
-    - uses: lukka/get-cmake@latest
+    - uses: lukka/get-cmake@v3
     # Setup vcpkg: ensures vcpkg is downloaded and built.
     # Since vcpkg.json is being used later on to install the packages
     # when `run-cmake` runs, no packages are installed at this time
