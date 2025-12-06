@@ -10,6 +10,7 @@
 #include <hello_imgui/hello_imgui.h>
 #include <memory>
 #include <thread>
+#include <exception> 
 
 using namespace std::chrono_literals;
 
@@ -193,29 +194,37 @@ void OperationsWindow::gui()
     static std::string i18nProjectVersion = state->i18nJSONDir == "" ? "" : git_head_digest(state);
 
     auto cloneCNProject = [this]() {
-        if (git_clone_repo(state))
-        {
-            state->addLog(_(MsgGitCloneSuccessed));
-            state->i18nJSONDir = state->i18nProjectDir / "zh_CN.UTF-8" / "json";
-            i18nProjectVersion = git_head_digest(state);
-            i18nProjectStatus = I18NProjectStatus::Existed;
-        }
-        else
-        {
-            state->addLog(_(MsgGitCloneFailed));
+        try {
+            if (git_clone_repo(state))
+            {
+                state->addLog(_(MsgGitCloneSuccessed));
+                state->i18nJSONDir = state->i18nProjectDir / "zh_CN.UTF-8" / "json";
+                i18nProjectVersion = git_head_digest(state);
+                i18nProjectStatus = I18NProjectStatus::Existed;
+            }
+            else
+            {
+                state->addLog(_(MsgGitCloneFailed));
+            }
+        } catch (std::exception& e) {
+            state->addLog(e.what());
         }
         gitTaskStatus = GitTaskStatus::Pending;
     };
 
     auto fetchCNProject = [this]() {
-        if (git_force_update(state))
-        {
-            state->addLog(_(MsgGitFetchSuccessed));
-            i18nProjectVersion = git_head_digest(state);
-        }
-        else
-        {
-            state->addLog(_(MsgGitFetchFailed));
+        try{
+            if (git_force_update(state))
+            {
+                state->addLog(_(MsgGitFetchSuccessed));
+                i18nProjectVersion = git_head_digest(state);
+            }
+            else
+            {
+                state->addLog(_(MsgGitFetchFailed));
+            }
+        } catch (std::exception& e) {
+            state->addLog(e.what());
         }
         gitTaskStatus = GitTaskStatus::Pending;
     };
