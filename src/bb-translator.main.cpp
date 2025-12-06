@@ -464,10 +464,10 @@ int gui_main()
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        return (void *)tex;
+        return (ImTextureID)tex;
     };
 
-    ifd::FileDialog::Instance().DeleteTexture = [](void *tex) {
+    ifd::FileDialog::Instance().DeleteTexture = [](ImTextureID tex) {
         GLuint texID = (GLuint)(size_t)(tex);
         glDeleteTextures(1, &texID);
     };
