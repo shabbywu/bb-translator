@@ -451,7 +451,7 @@ int gui_main()
         HelloImGui::SaveUserPref("bb-translator.http-proxy", httpProxyUrl);
     };
 
-    ifd::FileDialog::Instance().CreateTexture = [](uint8_t *data, int w, int h, char fmt) -> void * {
+    ifd::FileDialog::Instance().CreateTexture = [](uint8_t *data, int w, int h, char fmt) -> ImTextureID {
         GLuint tex;
 
         glGenTextures(1, &tex);
@@ -463,8 +463,7 @@ int gui_main()
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, (fmt == 0) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, data);
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
         glBindTexture(GL_TEXTURE_2D, 0);
-
-        return (ImTextureID)tex;
+        return static_cast<ImTextureID>(tex);
     };
 
     ifd::FileDialog::Instance().DeleteTexture = [](ImTextureID tex) {
