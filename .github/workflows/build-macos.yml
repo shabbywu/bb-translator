@@ -13,7 +13,7 @@ jobs:
     env:
       BB_TRANSLATOR_VERSION: ${{ (github.event_name == 'release' && github.event.action == 'published') && github.ref_name || github.sha }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: 'recursive'
         token: ${{ secrets.PRIVATE_TOKEN }}
