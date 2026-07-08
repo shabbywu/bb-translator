@@ -2,6 +2,8 @@
 #include <filesystem>
 #include <functional>
 #include <iostream>
+#include <string>
+#include <vector>
 
 enum LangType
 {
@@ -44,6 +46,7 @@ class AppState
     std::filesystem::path gameDir;
     std::filesystem::path i18nProjectDir;
     std::filesystem::path i18nJSONDir;
+    std::vector<std::string> selectedComponentIds = {"base"};
 
     // Git Clone
     std::string i18nProjectGitUrl = "https://github.com/shabbywu/Battle-Brothers-CN.git";

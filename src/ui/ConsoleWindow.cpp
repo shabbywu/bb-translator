@@ -2,7 +2,7 @@
 #include <frozen/unordered_map.h>
 #include <string>
 
-static constexpr enum MessageID
+enum MessageID
 {
     MsgTerminal,
     MsgOptional,

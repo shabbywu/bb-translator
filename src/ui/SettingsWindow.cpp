@@ -3,7 +3,7 @@
 #include <imgui.h>
 #include <hello_imgui/hello_imgui.h>
 
-static constexpr enum MessageID
+enum MessageID
 {
     MsgGitAdvanceSettingTitle,
     // Git Repo

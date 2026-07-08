@@ -5,6 +5,7 @@
 #include <iostream>
 #include <mutex>
 #include <pybind11/embed.h>
+#include <pybind11/stl.h>
 #include <thread>
 #include <vector>
 #include <zip.h>
@@ -62,11 +63,16 @@ void daemon_worker_thread(AppState *state)
             {
                 py::exec(R"(
                     from pathlib import Path
-                    from bb_translator.entrance import do_translate
+                    from bb_translator.entrance import do_translate, do_translate_project
                     if queues:
                         # set_lang(lang)
-                        game_path, json_path  = queues.pop(0)
-                        do_translate(Path(game_path), Path(json_path), addLog)
+                        task = queues.pop(0)
+                        if len(task) == 2:
+                            game_path, json_path = task
+                            do_translate(Path(game_path), Path(json_path), addLog)
+                        else:
+                            game_path, project_root, components = task
+                            do_translate_project(Path(game_path), Path(project_root), components, addLog)
                 )",
                          py::globals(), locals);
             }
@@ -205,7 +211,18 @@ void dispatch_translator(AppState *state)
         {
             py::gil_scoped_acquire acquire;
             py::dict locals;
-            locals["task"] = py::make_tuple(state->gameDir.string(), state->i18nJSONDir.string());
+            bool hasManifest =
+                !state->i18nProjectDir.empty() &&
+                std::filesystem::exists(state->i18nProjectDir / "localization.manifest.json");
+            if (hasManifest)
+            {
+                locals["task"] =
+                    py::make_tuple(state->gameDir.string(), state->i18nProjectDir.string(), state->selectedComponentIds);
+            }
+            else
+            {
+                locals["task"] = py::make_tuple(state->gameDir.string(), state->i18nJSONDir.string());
+            }
             py::exec(R"(
                 if queues:
                     addLog("上一个任务尚未完成...")
@@ -229,11 +246,19 @@ void sync_translate(AppState *state)
         py::dict locals;
         locals["game_path"] = state->gameDir.string();
         locals["json_path"] = state->i18nJSONDir.string();
+        locals["project_root"] = state->i18nProjectDir.string();
+        locals["components"] = state->selectedComponentIds;
+        locals["has_manifest"] =
+            !state->i18nProjectDir.empty() &&
+            std::filesystem::exists(state->i18nProjectDir / "localization.manifest.json");
         py::exec(R"(
             from pathlib import Path
-            from bb_translator.entrance import do_translate
+            from bb_translator.entrance import do_translate, do_translate_project
 
-            do_translate(Path(game_path), Path(json_path), addLog)
+            if has_manifest:
+                do_translate_project(Path(game_path), Path(project_root), components, addLog)
+            else:
+                do_translate(Path(game_path), Path(json_path), addLog)
         )",
                  py::globals(), locals);
     }
