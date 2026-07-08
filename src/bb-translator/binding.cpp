@@ -6,6 +6,7 @@
 #include <mutex>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
+#include <string>
 #include <thread>
 #include <vector>
 #include <zip.h>
@@ -48,6 +49,44 @@ std::thread daemon_thread;
 std::unique_ptr<py::scoped_interpreter> guard;
 std::unique_ptr<py::gil_scoped_release> release;
 std::mutex mtx;
+
+namespace
+{
+const char *binary_unzip_version_flag = ".binary.unzip.v3";
+const char *python_version_lock_file = ".python-version";
+const char *embedded_python_version = PY_VERSION;
+
+bool python_version_lock_matches(const std::filesystem::path &pythonRootDir)
+{
+    std::ifstream f(pythonRootDir / python_version_lock_file, std::ios::in | std::ios::binary);
+    if (f.fail())
+    {
+        return false;
+    }
+
+    std::string lockedVersion;
+    std::getline(f, lockedVersion);
+    if (!lockedVersion.empty() && lockedVersion.back() == '\r')
+    {
+        lockedVersion.pop_back();
+    }
+    return lockedVersion == embedded_python_version;
+}
+
+bool should_cleanup_python_root(const std::filesystem::path &pythonRootDir)
+{
+    return std::filesystem::exists(pythonRootDir) &&
+           (!std::filesystem::exists(pythonRootDir / binary_unzip_version_flag) ||
+            !python_version_lock_matches(pythonRootDir));
+}
+
+void write_python_version_lock(const std::filesystem::path &pythonRootDir)
+{
+    std::ofstream f(pythonRootDir / python_version_lock_file,
+                    std::ios::out | std::ios::binary | std::ios::trunc);
+    f << embedded_python_version << '\n';
+}
+} // namespace
 
 void daemon_worker_thread(AppState *state)
 {
@@ -94,10 +133,8 @@ void setup_python(AppState *state)
         debug::time_guard guard{"setup pyenv"};
         putenv("PYTHONIOENCODING=utf-8");
         // 解压缩资源
-        // 判断版本标记位, 不一致时清空文件夹
-        auto version_flag = ".binary.unzip.v3";
-        if (std::filesystem::exists(state->pythonRootDir) &&
-            !std::filesystem::exists(state->pythonRootDir / version_flag))
+        // 判断 bundle 和 Python 版本标记位, 不一致时清空文件夹
+        if (should_cleanup_python_root(state->pythonRootDir))
         {
             std::filesystem::remove_all(state->pythonRootDir);
         }
@@ -107,7 +144,7 @@ void setup_python(AppState *state)
             std::filesystem::create_directories(state->pythonRootDir);
         }
 
-        if (!std::filesystem::exists(state->pythonRootDir / version_flag))
+        if (!std::filesystem::exists(state->pythonRootDir / binary_unzip_version_flag))
         {
             auto &pythonZip = bin2cpp::getPythonZipFile();
             auto path = state->pythonRootDir.string();
@@ -119,7 +156,8 @@ void setup_python(AppState *state)
             }
             else
             {
-                std::ofstream f(state->pythonRootDir / version_flag,
+                write_python_version_lock(state->pythonRootDir);
+                std::ofstream f(state->pythonRootDir / binary_unzip_version_flag,
                                 std::ios::out | std::ios::binary | std::ios::trunc);
                 f.close();
             }
