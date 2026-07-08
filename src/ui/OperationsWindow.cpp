@@ -6,11 +6,17 @@
 #include "imgui_utilities/ImGuiExt.h"
 #include "imgui_utilities/imFileDialog.h"
 #include <chrono>
+#include <exception>
+#include <filesystem>
+#include <fstream>
 #include <frozen/unordered_map.h>
 #include <hello_imgui/hello_imgui.h>
 #include <memory>
+#include <regex>
+#include <set>
+#include <sstream>
 #include <thread>
-#include <exception> 
+#include <vector>
 
 using namespace std::chrono_literals;
 
@@ -27,7 +33,177 @@ static enum I18NProjectStatus
     Existed,
 };
 
-static constexpr enum MessageID
+struct LocalizationComponentOption
+{
+    std::string id;
+    std::string type;
+    std::string name;
+    bool required = false;
+    bool installed = false;
+    bool selected = false;
+    std::vector<std::string> detect;
+};
+
+static std::string readTextFile(const std::filesystem::path &path)
+{
+    std::ifstream stream(path, std::ios::in | std::ios::binary);
+    std::stringstream buffer;
+    buffer << stream.rdbuf();
+    return buffer.str();
+}
+
+static std::string jsonStringField(const std::string &object, const std::string &key)
+{
+    std::regex pattern("\"" + key + "\"\\s*:\\s*\"([^\"]*)\"");
+    std::smatch match;
+    if (std::regex_search(object, match, pattern))
+    {
+        return match[1].str();
+    }
+    return "";
+}
+
+static bool jsonBoolField(const std::string &object, const std::string &key)
+{
+    std::regex pattern("\"" + key + "\"\\s*:\\s*(true|false)");
+    std::smatch match;
+    if (std::regex_search(object, match, pattern))
+    {
+        return match[1].str() == "true";
+    }
+    return false;
+}
+
+static std::vector<std::string> jsonStringArrayField(const std::string &object, const std::string &key)
+{
+    std::vector<std::string> values;
+    std::regex pattern("\"" + key + "\"\\s*:\\s*\\[([^\\]]*)\\]");
+    std::smatch match;
+    if (!std::regex_search(object, match, pattern))
+    {
+        return values;
+    }
+    std::string arrayContent = match[1].str();
+    std::regex itemPattern("\"([^\"]*)\"");
+    auto begin = std::sregex_iterator(arrayContent.begin(), arrayContent.end(), itemPattern);
+    auto end = std::sregex_iterator();
+    for (auto it = begin; it != end; ++it)
+    {
+        values.push_back((*it)[1].str());
+    }
+    return values;
+}
+
+static std::regex globToRegex(const std::string &pattern)
+{
+    std::string regexPattern = "^";
+    for (char c : pattern)
+    {
+        switch (c)
+        {
+        case '*':
+            regexPattern += ".*";
+            break;
+        case '?':
+            regexPattern += ".";
+            break;
+        case '.':
+            regexPattern += "\\.";
+            break;
+        case '\\':
+        case '/':
+            regexPattern += "/";
+            break;
+        default:
+            if (std::string("+()^$|{}[]").find(c) != std::string::npos)
+            {
+                regexPattern += "\\";
+            }
+            regexPattern += c;
+        }
+    }
+    regexPattern += "$";
+    return std::regex(regexPattern);
+}
+
+static bool componentInstalled(const LocalizationComponentOption &component, const std::filesystem::path &gameDir)
+{
+    if (component.required || component.id == "base")
+    {
+        return true;
+    }
+    if (component.detect.empty() || gameDir.empty())
+    {
+        return false;
+    }
+    auto dataDir = gameDir / "data";
+    if (!std::filesystem::exists(dataDir))
+    {
+        return false;
+    }
+    for (const auto &entry : std::filesystem::directory_iterator(dataDir))
+    {
+        auto filename = entry.path().filename().string();
+        auto relative = std::string("data/") + filename;
+        for (const auto &detect : component.detect)
+        {
+            auto pattern = globToRegex(detect);
+            if (std::regex_match(filename, pattern) || std::regex_match(relative, pattern))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static std::vector<LocalizationComponentOption> loadLocalizationComponents(
+    const std::filesystem::path &manifestPath,
+    const std::filesystem::path &gameDir)
+{
+    std::vector<LocalizationComponentOption> components;
+    if (!std::filesystem::exists(manifestPath))
+    {
+        return components;
+    }
+    auto content = readTextFile(manifestPath);
+    std::regex objectPattern("\\{[^\\{\\}]*\"id\"\\s*:\\s*\"[^\"]+\"[^\\{\\}]*\\}");
+    auto begin = std::sregex_iterator(content.begin(), content.end(), objectPattern);
+    auto end = std::sregex_iterator();
+    for (auto it = begin; it != end; ++it)
+    {
+        auto object = it->str();
+        LocalizationComponentOption component;
+        component.id = jsonStringField(object, "id");
+        component.type = jsonStringField(object, "type");
+        component.name = jsonStringField(object, "name");
+        component.required = jsonBoolField(object, "required") || component.id == "base";
+        component.detect = jsonStringArrayField(object, "detect");
+        component.installed = componentInstalled(component, gameDir);
+        component.selected = component.required || component.installed;
+        if (!component.id.empty())
+        {
+            components.push_back(component);
+        }
+    }
+    return components;
+}
+
+static void updateSelectedComponents(AppState *state, const std::vector<LocalizationComponentOption> &components)
+{
+    std::set<std::string> selected;
+    selected.insert("base");
+    for (const auto &component : components)
+    {
+        if (component.selected || component.required || component.id == "base")
+        {
+            selected.insert(component.id);
+        }
+    }
+    state->selectedComponentIds.assign(selected.begin(), selected.end());
+}
+
+enum MessageID
 {
     // Message Group for Git
     MsgGitCloneSuccessed,
@@ -45,6 +221,8 @@ static constexpr enum MessageID
     MsgUpdateI18nProjectButton,
     MsgI18nProjectButtonTooltip,
     MsgI18nProjectVersionTmpl,
+    MsgLocalizationComponentsTitle,
+    MsgLocalizationComponentMissing,
 
     MsgSelectI18nJsonFolderButton,
     MsgSelectI18nJsonFolder,
@@ -106,6 +284,8 @@ static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID
                                "如初始化或更新翻译项目失败, 请尝试切换 Git 仓库源。",
                            },
                            {MsgI18nProjectVersionTmpl, "文本版本: %.20s"},
+                           {MsgLocalizationComponentsTitle, "汉化组件"},
+                           {MsgLocalizationComponentMissing, "未检测到"},
                            {MsgSelectI18nJsonFolderButton, ICON_FA_FILE " Select i18n json directory"},
                            {
                                MsgSelectI18nJsonFolder,
@@ -167,6 +347,8 @@ static constexpr frozen::unordered_map<LangType, frozen::unordered_map<MessageID
                             "如初始化或更新翻译项目失败, 请尝试切换 Git 仓库源。",
                         },
                         {MsgI18nProjectVersionTmpl, "文本版本: %.20s"},
+                        {MsgLocalizationComponentsTitle, "Localization Components"},
+                        {MsgLocalizationComponentMissing, "Not detected"},
                         {MsgSelectI18nJsonFolderButton, ICON_FA_FILE " Select i18n json directory"},
                         {
                             MsgSelectI18nJsonFolder,
@@ -192,6 +374,30 @@ void OperationsWindow::gui()
         state->i18nJSONDir == "" ? (state->gameDir == "" ? I18NProjectStatus::Unknown : I18NProjectStatus::Missing)
                                  : I18NProjectStatus::Existed;
     static std::string i18nProjectVersion = state->i18nJSONDir == "" ? "" : git_head_digest(state);
+    static std::vector<LocalizationComponentOption> localizationComponents;
+    static std::string localizationComponentsKey;
+
+    auto refreshLocalizationComponents = [this]() {
+        if (state->i18nProjectDir.empty())
+        {
+            if (!localizationComponents.empty())
+            {
+                localizationComponents.clear();
+                state->selectedComponentIds = {"base"};
+            }
+            localizationComponentsKey = "";
+            return;
+        }
+
+        auto manifestPath = state->i18nProjectDir / "localization.manifest.json";
+        auto key = manifestPath.string() + "|" + state->gameDir.string();
+        if (key != localizationComponentsKey)
+        {
+            localizationComponents = loadLocalizationComponents(manifestPath, state->gameDir);
+            updateSelectedComponents(state, localizationComponents);
+            localizationComponentsKey = key;
+        }
+    };
 
     auto cloneCNProject = [this]() {
         try {
@@ -201,6 +407,7 @@ void OperationsWindow::gui()
                 state->i18nJSONDir = state->i18nProjectDir / "zh_CN.UTF-8" / "json";
                 i18nProjectVersion = git_head_digest(state);
                 i18nProjectStatus = I18NProjectStatus::Existed;
+                localizationComponentsKey = "";
             }
             else
             {
@@ -218,6 +425,7 @@ void OperationsWindow::gui()
             {
                 state->addLog(_(MsgGitFetchSuccessed));
                 i18nProjectVersion = git_head_digest(state);
+                localizationComponentsKey = "";
             }
             else
             {
@@ -301,6 +509,38 @@ void OperationsWindow::gui()
         ImGui::TextWrapped(state->i18nJSONDir.string().c_str());
     }
 
+    refreshLocalizationComponents();
+    if (!localizationComponents.empty())
+    {
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(0.6875f, 0.621f, 0.539f, 1.0f), _(MsgLocalizationComponentsTitle));
+        for (auto &component : localizationComponents)
+        {
+            bool selected = component.selected || component.required;
+            bool disabled = component.required || !component.installed;
+            if (disabled)
+            {
+                ImGui::BeginDisabled(true);
+            }
+            std::string label = component.name.empty() ? component.id : component.name;
+            label += "##component_" + component.id;
+            if (ImGui::Checkbox(label.c_str(), &selected))
+            {
+                component.selected = selected;
+                updateSelectedComponents(state, localizationComponents);
+            }
+            if (disabled)
+            {
+                ImGui::EndDisabled();
+            }
+            if (!component.required && !component.installed)
+            {
+                ImGuiExt::SameLine_IfPossible(10);
+                ImGui::TextDisabled(_(MsgLocalizationComponentMissing));
+            }
+        }
+    }
+
     // 渲染 “翻译文本” 按钮
     {
         bool enabled = state->gameDir.string().length() > 0 && state->i18nJSONDir.string().length() > 0;
@@ -318,6 +558,7 @@ void OperationsWindow::gui()
             state->gameDir = ifd::FileDialog::Instance().GetResult();
             state->i18nProjectDir = state->gameDir / "Battle-Brothers-CN";
             state->i18nJSONDir = state->i18nProjectDir / "zh_CN.UTF-8" / "json";
+            localizationComponentsKey = "";
 
             if (!std::filesystem::exists(state->i18nJSONDir))
             {

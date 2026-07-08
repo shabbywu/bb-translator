@@ -3,7 +3,7 @@
 #include <frozen/unordered_map.h>
 #include <hello_imgui/hello_imgui.h>
 
-static constexpr enum MessageID
+enum MessageID
 {
     MsgUsage,
     // trick to get enum size

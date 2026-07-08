@@ -4,7 +4,7 @@
 #include "imgui_utilities/MarkdownHelper.h"
 #include <frozen/unordered_map.h>
 
-static constexpr enum MessageID
+enum MessageID
 {
     MsgHelp,
     MsgUsageButton,

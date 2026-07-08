@@ -387,8 +387,13 @@ FileDialog::FileData::FileData(const std::filesystem::path &path)
     IsDirectory = std::filesystem::is_directory(path, ec);
     Size = std::filesystem::file_size(path, ec);
 
+#ifdef _WIN32
     struct _stat64i32 attr;
     _wstat(path.c_str(), &attr);
+#else
+    struct stat attr;
+    stat(path.string().c_str(), &attr);
+#endif
     DateModified = attr.st_ctime;
 
     HasIconPreview = false;

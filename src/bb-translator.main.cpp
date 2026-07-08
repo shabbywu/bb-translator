@@ -38,7 +38,7 @@ AppState state;
 #define BB_TRANSLATOR_VERSION "develop"
 #endif
 
-static constexpr enum MessageID
+enum MessageID
 {
     MsgWindowTitle,
     // Menu - Link

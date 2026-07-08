@@ -15,5 +15,17 @@
         "libgit2",
         "argparse",
         "frozen"
+    ],
+    "overrides": [
+        {
+        "name": "hello-imgui",
+        "version": "1.6.0",
+        "port-version": 3
+        },
+        {
+        "name": "imgui",
+        "version": "1.91.9",
+        "port-version": 0
+        }
     ]
 }

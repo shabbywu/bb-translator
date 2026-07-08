@@ -5,6 +5,8 @@
 #include <iostream>
 #include <mutex>
 #include <pybind11/embed.h>
+#include <pybind11/stl.h>
+#include <string>
 #include <thread>
 #include <vector>
 #include <zip.h>
@@ -48,6 +50,44 @@ std::unique_ptr<py::scoped_interpreter> guard;
 std::unique_ptr<py::gil_scoped_release> release;
 std::mutex mtx;
 
+namespace
+{
+const char *binary_unzip_version_flag = ".binary.unzip.v3";
+const char *python_version_lock_file = ".python-version";
+const char *embedded_python_version = PY_VERSION;
+
+bool python_version_lock_matches(const std::filesystem::path &pythonRootDir)
+{
+    std::ifstream f(pythonRootDir / python_version_lock_file, std::ios::in | std::ios::binary);
+    if (f.fail())
+    {
+        return false;
+    }
+
+    std::string lockedVersion;
+    std::getline(f, lockedVersion);
+    if (!lockedVersion.empty() && lockedVersion.back() == '\r')
+    {
+        lockedVersion.pop_back();
+    }
+    return lockedVersion == embedded_python_version;
+}
+
+bool should_cleanup_python_root(const std::filesystem::path &pythonRootDir)
+{
+    return std::filesystem::exists(pythonRootDir) &&
+           (!std::filesystem::exists(pythonRootDir / binary_unzip_version_flag) ||
+            !python_version_lock_matches(pythonRootDir));
+}
+
+void write_python_version_lock(const std::filesystem::path &pythonRootDir)
+{
+    std::ofstream f(pythonRootDir / python_version_lock_file,
+                    std::ios::out | std::ios::binary | std::ios::trunc);
+    f << embedded_python_version << '\n';
+}
+} // namespace
+
 void daemon_worker_thread(AppState *state)
 {
     state->addLog("[*] worker daemon started");
@@ -62,11 +102,16 @@ void daemon_worker_thread(AppState *state)
             {
                 py::exec(R"(
                     from pathlib import Path
-                    from bb_translator.entrance import do_translate
+                    from bb_translator.entrance import do_translate, do_translate_project
                     if queues:
                         # set_lang(lang)
-                        game_path, json_path  = queues.pop(0)
-                        do_translate(Path(game_path), Path(json_path), addLog)
+                        task = queues.pop(0)
+                        if len(task) == 2:
+                            game_path, json_path = task
+                            do_translate(Path(game_path), Path(json_path), addLog)
+                        else:
+                            game_path, project_root, components = task
+                            do_translate_project(Path(game_path), Path(project_root), components, addLog)
                 )",
                          py::globals(), locals);
             }
@@ -88,10 +133,8 @@ void setup_python(AppState *state)
         debug::time_guard guard{"setup pyenv"};
         putenv("PYTHONIOENCODING=utf-8");
         // 解压缩资源
-        // 判断版本标记位, 不一致时清空文件夹
-        auto version_flag = ".binary.unzip.v3";
-        if (std::filesystem::exists(state->pythonRootDir) &&
-            !std::filesystem::exists(state->pythonRootDir / version_flag))
+        // 判断 bundle 和 Python 版本标记位, 不一致时清空文件夹
+        if (should_cleanup_python_root(state->pythonRootDir))
         {
             std::filesystem::remove_all(state->pythonRootDir);
         }
@@ -101,7 +144,7 @@ void setup_python(AppState *state)
             std::filesystem::create_directories(state->pythonRootDir);
         }
 
-        if (!std::filesystem::exists(state->pythonRootDir / version_flag))
+        if (!std::filesystem::exists(state->pythonRootDir / binary_unzip_version_flag))
         {
             auto &pythonZip = bin2cpp::getPythonZipFile();
             auto path = state->pythonRootDir.string();
@@ -113,7 +156,8 @@ void setup_python(AppState *state)
             }
             else
             {
-                std::ofstream f(state->pythonRootDir / version_flag,
+                write_python_version_lock(state->pythonRootDir);
+                std::ofstream f(state->pythonRootDir / binary_unzip_version_flag,
                                 std::ios::out | std::ios::binary | std::ios::trunc);
                 f.close();
             }
@@ -205,7 +249,18 @@ void dispatch_translator(AppState *state)
         {
             py::gil_scoped_acquire acquire;
             py::dict locals;
-            locals["task"] = py::make_tuple(state->gameDir.string(), state->i18nJSONDir.string());
+            bool hasManifest =
+                !state->i18nProjectDir.empty() &&
+                std::filesystem::exists(state->i18nProjectDir / "localization.manifest.json");
+            if (hasManifest)
+            {
+                locals["task"] =
+                    py::make_tuple(state->gameDir.string(), state->i18nProjectDir.string(), state->selectedComponentIds);
+            }
+            else
+            {
+                locals["task"] = py::make_tuple(state->gameDir.string(), state->i18nJSONDir.string());
+            }
             py::exec(R"(
                 if queues:
                     addLog("上一个任务尚未完成...")
@@ -229,11 +284,19 @@ void sync_translate(AppState *state)
         py::dict locals;
         locals["game_path"] = state->gameDir.string();
         locals["json_path"] = state->i18nJSONDir.string();
+        locals["project_root"] = state->i18nProjectDir.string();
+        locals["components"] = state->selectedComponentIds;
+        locals["has_manifest"] =
+            !state->i18nProjectDir.empty() &&
+            std::filesystem::exists(state->i18nProjectDir / "localization.manifest.json");
         py::exec(R"(
             from pathlib import Path
-            from bb_translator.entrance import do_translate
+            from bb_translator.entrance import do_translate, do_translate_project
 
-            do_translate(Path(game_path), Path(json_path), addLog)
+            if has_manifest:
+                do_translate_project(Path(game_path), Path(project_root), components, addLog)
+            else:
+                do_translate(Path(game_path), Path(json_path), addLog)
         )",
                  py::globals(), locals);
     }
