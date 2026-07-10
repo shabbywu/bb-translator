@@ -517,7 +517,7 @@ void OperationsWindow::gui()
         for (auto &component : localizationComponents)
         {
             bool selected = component.selected || component.required;
-            bool disabled = component.required || !component.installed;
+            bool disabled = component.required;
             if (disabled)
             {
                 ImGui::BeginDisabled(true);
